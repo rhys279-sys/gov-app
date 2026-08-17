@@ -4,8 +4,15 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+interface Submission {
+  id: string
+  score: number
+  comment: string | null
+  created_at: string
+}
+
 export default function HistoryPage() {
-  const [submissions, setSubmissions] = useState([])
+  const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
