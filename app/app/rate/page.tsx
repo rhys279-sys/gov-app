@@ -10,7 +10,7 @@ export default function RatePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
   const router = useRouter()
   const supabase = createClient()
