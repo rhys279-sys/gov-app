@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { User } from '@supabase/supabase-js'
 
 export default function RatePage() {
   const [score, setScore] = useState(0)
@@ -11,14 +10,10 @@ export default function RatePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState(null)
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
   const router = useRouter()
   const supabase = createClient()
-  const handleLogout = async () => {
-  await supabase.auth.signOut()
-  router.push('/login')
-}
 
   useEffect(() => {
     loadPage()
@@ -30,6 +25,7 @@ export default function RatePage() {
       router.push('/login')
       return
     }
+    
     setUser(data.user)
     
     const today = new Date()
@@ -46,7 +42,8 @@ export default function RatePage() {
     }
   }
 
-const handleSubmit = async (e: React.FormEvent) => {    e.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     if (score === 0) {
       setError('Pick a rating')
       return
@@ -93,9 +90,8 @@ const handleSubmit = async (e: React.FormEvent) => {    e.preventDefault()
         
         {error && <p className="text-red-400 mt-2">{error}</p>}
         {success && <p className="text-green-400 mt-2">Submitted!</p>}
-        <button type="button" onClick={handleLogout} className="w-full mt-2 text-gray-400 text-sm hover:text-gray-300">
-  Logout
-</button>
+        
+        <button type="button" onClick={async () => { await supabase.auth.signOut(); router.push('/login') }} className="w-full mt-2 text-gray-400 text-sm hover:text-gray-300">Logout</button>
       </div>
     </div>
   )
