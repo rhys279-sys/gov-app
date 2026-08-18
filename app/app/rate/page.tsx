@@ -67,11 +67,25 @@ export default function RatePage() {
       setScore(0)
       setComment('')
       setHasSubmittedToday(true)
-      setTimeout(() => setSuccess(false), 3000)
+      setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit')
     }
     setLoading(false)
+  }
+ 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Civipulse',
+          text: 'Your thoughts, your voice. Share your pulse on government daily.',
+          url: window.location.origin + '/login'
+        })
+      } catch (err) {
+        console.log('Share cancelled')
+      }
+    }
   }
  
   const handleLogout = async () => {
@@ -202,10 +216,25 @@ export default function RatePage() {
               <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
             )}
  
-            {/* Success Message */}
+            {/* Success Message with Share Button */}
             {success && (
-              <div className="mt-4 p-3 bg-green-50 border-l-4 border-green-600 rounded">
-                <p className="text-sm font-medium text-green-700">✓ Thank you! Your voice has been heard.</p>
+              <div className="mt-4 space-y-3">
+                <div className="p-3 bg-green-50 border-l-4 border-green-600 rounded">
+                  <p className="text-sm font-medium text-green-700">✓ Thank you! Your voice has been heard.</p>
+                </div>
+                {navigator.share && (
+                  <button
+                    onClick={handleShare}
+                    className="w-full py-2 font-semibold text-white text-sm rounded-md transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #CC0000 0%, #990000 100%)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    Share Civipulse
+                  </button>
+                )}
               </div>
             )}
  

@@ -12,6 +12,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true)
   const [todayCount, setTodayCount] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
+  const [copySuccess, setCopySuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
  
@@ -70,6 +71,17 @@ export default function HistoryPage() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
+  }
+ 
+  const handleCopyLink = async () => {
+    const inviteLink = `${window.location.origin}/login`
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy link:', err)
+    }
   }
  
   if (loading) {
@@ -199,7 +211,7 @@ export default function HistoryPage() {
         {/* Community Feed */}
         <div className="bg-white bg-opacity-95 p-6 rounded-lg shadow-sm mb-6">
           <h2 className="text-lg font-bold text-blue-950 mb-4">What Others Are Thinking</h2>
-          <p className="text-xs text-gray-600 mb-4">Recent anonymous pulse checks from the community</p>
+          <p className="text-xs text-gray-600 mb-4">Recent anonymous civipulses from the community</p>
  
           {allSubmissions.length > 0 ? (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -234,6 +246,19 @@ export default function HistoryPage() {
           >
             Share Your Thoughts
           </button>
+          
+          <button
+            onClick={handleCopyLink}
+            className="w-full py-3 font-semibold text-white text-base rounded-md transition-all duration-200"
+            style={{
+              background: copySuccess ? '#10b981' : 'linear-gradient(135deg, #CC0000 0%, #990000 100%)'
+            }}
+            onMouseEnter={(e) => !copySuccess && (e.currentTarget.style.transform = 'translateY(-2px)')}
+            onMouseLeave={(e) => !copySuccess && (e.currentTarget.style.transform = 'translateY(0)')}
+          >
+            {copySuccess ? '✓ Link copied!' : 'Invite Others'}
+          </button>
+ 
           <button
             onClick={handleLogout}
             className="w-full py-3 font-semibold text-gray-600 text-base rounded-md transition-colors"
@@ -247,3 +272,4 @@ export default function HistoryPage() {
     </div>
   )
 }
+ 
