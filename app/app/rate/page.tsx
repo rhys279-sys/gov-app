@@ -153,6 +153,21 @@ export default function RatePage() {
                     </div>
                   </div>
                 )}
+ 
+                {/* Share Button */}
+                {navigator.share && (
+                  <button
+                    onClick={handleShare}
+                    className="w-full py-2 mt-2 font-semibold text-white text-sm rounded-md transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #CC0000 0%, #990000 100%)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    Share Civipulse
+                  </button>
+                )}
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -264,3 +279,4 @@ export default function RatePage() {
     </div>
   )
 }
+ 
