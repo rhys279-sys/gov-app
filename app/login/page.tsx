@@ -88,6 +88,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
                   className="w-full px-3 py-3 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-200"
+                  style={{ color: '#002147' }}
                   required
                 />
               </div>
@@ -100,6 +101,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full px-3 py-3 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-200"
+                  style={{ color: '#002147' }}
                   required
                 />
               </div>
@@ -162,4 +164,3 @@ export default function LoginPage() {
     </div>
   )
 }
- 
