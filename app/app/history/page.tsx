@@ -59,11 +59,11 @@ export default function HistoryPage() {
     setTodayCount(todaySubmissions?.length || 0)
  
     // Count total submissions
-    const { data: allCounts } = await supabase
+    const { count } = await supabase
       .from('submissions')
       .select('*', { count: 'exact', head: true })
  
-    setTotalCount(allCounts?.length || 0)
+    setTotalCount(count || 0)
  
     setLoading(false)
   }
