@@ -193,7 +193,7 @@ export default function RatePage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Question */}
                 <div>
-                  <p className="text-base font-medium text-gray-800 mb-4">How do you rate today's political events?</p>
+                  <p className="text-lg font-bold text-gray-800 text-center mb-4">How do you rate today's political events?</p>
                   
                   {/* Rating Buttons */}
                   <div className="flex gap-3 justify-center mb-2">
