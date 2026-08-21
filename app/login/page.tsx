@@ -26,7 +26,8 @@ export default function LoginPage() {
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password })
         if (err) throw err
-        router.push('/app/rate')
+        // Redirect to profile page instead of directly to rate
+        router.push('/app/profile')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
