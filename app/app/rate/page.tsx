@@ -214,7 +214,7 @@ export default function RatePage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-600 text-center">1 (Very dissatisfied) to 5 (Very satisfied)</p>
+                  <p className="text-xs font-bold text-center" style={{ color: '#CC0000' }}>1 (Very dissatisfied) to 5 (Very satisfied)</p>
                 </div>
  
                 {/* Comment Field */}
