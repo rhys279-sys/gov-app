@@ -146,7 +146,7 @@ export default function RatePage() {
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-blue-950 mb-1">Civipulse</h1>
-            <p className="text-sm font-medium" style={{ color: '#CC0000' }}>Your thoughts, your voice</p>
+            <p className="text-sm font-bold" style={{ color: '#CC0000' }}>Your thoughts, your voice</p>
           </div>
  
           {/* Main Card */}
