@@ -1,9 +1,9 @@
 'use client'
- 
+
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
- 
+
 export default function RatePage() {
   const [score, setScore] = useState(0)
   const [comment, setComment] = useState('')
@@ -14,9 +14,15 @@ export default function RatePage() {
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
   const [lastSubmission, setLastSubmission] = useState<any>(null)
   const [pageLoading, setPageLoading] = useState(true)
+  const [lastSubmissionId, setLastSubmissionId] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [otherCategoryText, setOtherCategoryText] = useState('')
+  const [savingCategory, setSavingCategory] = useState(false)
   const router = useRouter()
   const supabase = createClient()
- 
+
+  const categories = ['Healthcare', 'Climate', 'Economy', 'Education', 'Infrastructure', 'Other']
+
   useEffect(() => {
     loadPage()
     
@@ -38,19 +44,19 @@ export default function RatePage() {
     
     return checkMidnight()
   }, [])
- 
+
   const loadPage = async () => {
     const { data } = await supabase.auth.getUser()
     if (!data.user) {
       router.push('/login')
       return
     }
- 
+
     setUser(data.user)
- 
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
- 
+
     const { data: submissions } = await supabase
       .from('submissions')
       .select('*')
@@ -58,42 +64,80 @@ export default function RatePage() {
       .gte('created_at', today.toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
- 
+
     if (submissions && submissions.length > 0) {
       setHasSubmittedToday(true)
       setLastSubmission(submissions[0])
     }
- 
+
     setPageLoading(false)
   }
- 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (score === 0) {
       setError('Please select a rating')
       return
     }
- 
+
     setLoading(true)
     try {
-      const { error: err } = await supabase
+      const { data: insertedData, error: err } = await supabase
         .from('submissions')
         .insert({ user_id: user.id, score, comment: comment || null })
- 
+        .select()
+
       if (err) throw err
+      
+      if (insertedData && insertedData.length > 0) {
+        setLastSubmissionId(insertedData[0].id)
+      }
+      
       setSuccess(true)
       setScore(0)
       setComment('')
+      setSelectedCategory(null)
+      setOtherCategoryText('')
       setHasSubmittedToday(true)
-      
-      // Reload the page after success to show fresh state
-      setTimeout(() => window.location.reload(), 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit')
     }
     setLoading(false)
   }
- 
+
+  const handleCategorySelect = async (category: string) => {
+    if (category === 'Other' && !otherCategoryText.trim()) {
+      setError('Please specify your theme')
+      return
+    }
+
+    setSavingCategory(true)
+    try {
+      const { error: err } = await supabase
+        .from('submissions')
+        .update({
+          category: category,
+          other_category: category === 'Other' ? otherCategoryText : null
+        })
+        .eq('id', lastSubmissionId)
+
+      if (err) throw err
+      
+      setSuccess(false)
+      setSelectedCategory(null)
+      setOtherCategoryText('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save category')
+    }
+    setSavingCategory(false)
+  }
+
+  const handleSkipCategory = () => {
+    setSuccess(false)
+    setSelectedCategory(null)
+    setOtherCategoryText('')
+  }
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -107,12 +151,12 @@ export default function RatePage() {
       }
     }
   }
- 
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
- 
+
   if (pageLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#fafaf9' }}>
@@ -120,7 +164,7 @@ export default function RatePage() {
       </div>
     )
   }
- 
+
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: '#fafaf9' }}>
       {/* Watermark Background */}
@@ -131,7 +175,75 @@ export default function RatePage() {
         backgroundRepeat: 'no-repeat',
         backgroundAttachment: 'fixed'
       }} />
- 
+
+      {/* Modal Overlay */}
+      {success && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-t-lg w-full max-w-md p-6 animate-in slide-in-from-bottom">
+            <h3 className="text-lg font-bold text-blue-950 mb-2">What theme does this most fall under?</h3>
+            <p className="text-xs text-gray-600 mb-4">Help us understand what you're rating about</p>
+
+            {/* Category Buttons */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category === selectedCategory ? null : category)}
+                  className="py-2 px-3 rounded-md text-sm font-medium transition-all"
+                  style={{
+                    background: selectedCategory === category ? '#CC0000' : '#f0f0f0',
+                    color: selectedCategory === category ? 'white' : '#333'
+                  }}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            {/* Other Category Text Input */}
+            {selectedCategory === 'Other' && (
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={otherCategoryText}
+                  onChange={(e) => setOtherCategoryText(e.target.value)}
+                  placeholder="e.g., Transport, Housing, Environment"
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600"
+                  style={{ color: '#002147' }}
+                  maxLength={50}
+                />
+                <p className="text-xs text-gray-500 mt-1">{otherCategoryText.length} / 50</p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <p className="text-xs text-red-600 mb-3">{error}</p>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={() => handleCategorySelect(selectedCategory || '')}
+                disabled={!selectedCategory || savingCategory}
+                className="w-full py-2 font-semibold text-white text-sm rounded-md transition-all disabled:opacity-50"
+                style={{
+                  background: 'linear-gradient(135deg, #002147 0%, #003366 100%)'
+                }}
+              >
+                {savingCategory ? 'Saving...' : 'Confirm'}
+              </button>
+              <button
+                onClick={handleSkipCategory}
+                className="w-full py-2 font-semibold text-gray-600 text-sm rounded-md transition-colors"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-8">
         <div className="w-full max-w-md">
@@ -146,9 +258,9 @@ export default function RatePage() {
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-blue-950 mb-1">Civipulse</h1>
-            <p className="text-sm font-bold" style={{ color: '#CC0000' }}>Your thoughts, your voice</p>
+            <p className="text-sm font-medium" style={{ color: '#CC0000' }}>Your thoughts, your voice</p>
           </div>
- 
+
           {/* Main Card */}
           <div className="bg-white bg-opacity-95 p-8 rounded-lg shadow-sm">
             {hasSubmittedToday ? (
@@ -158,7 +270,7 @@ export default function RatePage() {
                   <p className="text-sm font-medium text-blue-950">You've already shared your thoughts today!</p>
                   <p className="text-xs text-gray-600 mt-1">Come back tomorrow to share again.</p>
                 </div>
- 
+
                 {/* Today's Submission */}
                 {lastSubmission && (
                   <div className="bg-gray-50 p-4 rounded">
@@ -173,7 +285,7 @@ export default function RatePage() {
                     </div>
                   </div>
                 )}
- 
+
                 {/* Share Button */}
                 {navigator.share && (
                   <button
@@ -193,7 +305,7 @@ export default function RatePage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Question */}
                 <div>
-                  <p className="text-lg font-bold text-gray-800 text-center mb-4">How do you rate today's political events?</p>
+                  <p className="text-lg font-bold text-center mb-4" style={{ color: '#002147' }}>Based on today, how do you rate today's political events?</p>
                   
                   {/* Rating Buttons */}
                   <div className="flex gap-3 justify-center mb-2">
@@ -216,7 +328,7 @@ export default function RatePage() {
                   </div>
                   <p className="text-xs font-bold text-center" style={{ color: '#CC0000' }}>1 (Very dissatisfied) to 5 (Very satisfied)</p>
                 </div>
- 
+
                 {/* Comment Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Add a comment (optional)</label>
@@ -230,7 +342,7 @@ export default function RatePage() {
                   />
                   <p className="text-xs text-gray-500 mt-1">{comment.length} / 280</p>
                 </div>
- 
+
                 {/* Submit Button */}
                 <button
                   type="submit"
@@ -246,34 +358,12 @@ export default function RatePage() {
                 </button>
               </form>
             )}
- 
+
             {/* Error Message */}
-            {error && (
+            {error && !success && (
               <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
             )}
- 
-            {/* Success Message with Share Button */}
-            {success && !hasSubmittedToday && (
-              <div className="mt-4 space-y-3">
-                <div className="p-3 bg-green-50 border-l-4 border-green-600 rounded">
-                  <p className="text-sm font-medium text-green-700">✓ Thank you! Your voice has been heard.</p>
-                </div>
-                {navigator.share && (
-                  <button
-                    onClick={handleShare}
-                    className="w-full py-2 font-semibold text-white text-sm rounded-md transition-all duration-200"
-                    style={{
-                      background: 'linear-gradient(135deg, #CC0000 0%, #990000 100%)'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                  >
-                    Share Civipulse
-                  </button>
-                )}
-              </div>
-            )}
- 
+
             {/* Navigation Links */}
             <div className="mt-6 space-y-2 border-t pt-6">
               <button
