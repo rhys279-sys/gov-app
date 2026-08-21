@@ -223,7 +223,7 @@ export default function RatePage() {
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value.slice(0, 280))}
-                    placeholder="What's do you want to share today?"
+                    placeholder="What do you want to share today?"
                     className="w-full px-3 py-3 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-200 resize-none placeholder-blue-950"
                     style={{ color: '#002147' }}
                     rows={3}
