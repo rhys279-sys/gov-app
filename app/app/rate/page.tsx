@@ -19,6 +19,24 @@ export default function RatePage() {
  
   useEffect(() => {
     loadPage()
+    
+    // Set up auto-refresh at midnight
+    const checkMidnight = () => {
+      const now = new Date()
+      const tomorrow = new Date(now)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      tomorrow.setHours(0, 0, 0, 0)
+      
+      const timeUntilMidnight = tomorrow.getTime() - now.getTime()
+      
+      const timeout = setTimeout(() => {
+        window.location.reload()
+      }, timeUntilMidnight)
+      
+      return () => clearTimeout(timeout)
+    }
+    
+    return checkMidnight()
   }, [])
  
   const loadPage = async () => {
@@ -67,7 +85,9 @@ export default function RatePage() {
       setScore(0)
       setComment('')
       setHasSubmittedToday(true)
-      setTimeout(() => setSuccess(false), 4000)
+      
+      // Reload the page after success to show fresh state
+      setTimeout(() => window.location.reload(), 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit')
     }
@@ -173,7 +193,7 @@ export default function RatePage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Question */}
                 <div>
-                  <p className="text-base font-medium text-gray-800 mb-4">How do you feel about government today?</p>
+                  <p className="text-base font-medium text-gray-800 mb-4">Based on today, how do you rate today's political events?</p>
                   
                   {/* Rating Buttons */}
                   <div className="flex gap-3 justify-center mb-2">
@@ -205,6 +225,7 @@ export default function RatePage() {
                     onChange={(e) => setComment(e.target.value.slice(0, 280))}
                     placeholder="What's on your mind?"
                     className="w-full px-3 py-3 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-200 resize-none"
+                    style={{ color: '#002147' }}
                     rows={3}
                   />
                   <p className="text-xs text-gray-500 mt-1">{comment.length} / 280</p>
@@ -232,7 +253,7 @@ export default function RatePage() {
             )}
  
             {/* Success Message with Share Button */}
-            {success && (
+            {success && !hasSubmittedToday && (
               <div className="mt-4 space-y-3">
                 <div className="p-3 bg-green-50 border-l-4 border-green-600 rounded">
                   <p className="text-sm font-medium text-green-700">✓ Thank you! Your voice has been heard.</p>
@@ -279,4 +300,3 @@ export default function RatePage() {
     </div>
   )
 }
- 
