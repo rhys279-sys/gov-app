@@ -21,7 +21,14 @@ export default function RatePage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const categories = ['Healthcare', 'Climate', 'Economy', 'Education', 'Infrastructure', 'Other']
+  const categories = [
+    { name: 'Healthcare', emoji: '🏥' },
+    { name: 'Climate', emoji: '🌍' },
+    { name: 'Economy', emoji: '💼' },
+    { name: 'Education', emoji: '📚' },
+    { name: 'Infrastructure', emoji: '🏗️' },
+    { name: 'Other', emoji: '❓' }
+  ]
 
   useEffect(() => {
     loadPage()
@@ -91,6 +98,7 @@ export default function RatePage() {
       
       if (insertedData && insertedData.length > 0) {
         setLastSubmissionId(insertedData[0].id)
+        setLastSubmission(insertedData[0])
       }
       
       setSuccess(true)
@@ -123,19 +131,17 @@ export default function RatePage() {
 
       if (err) throw err
       
-      setSuccess(false)
       setSelectedCategory(null)
       setOtherCategoryText('')
+      setError('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save category')
     }
     setSavingCategory(false)
   }
 
-  const handleSkipCategory = () => {
+  const handleDismissSuccess = () => {
     setSuccess(false)
-    setSelectedCategory(null)
-    setOtherCategoryText('')
   }
 
   const handleShare = async () => {
@@ -176,71 +182,113 @@ export default function RatePage() {
         backgroundAttachment: 'fixed'
       }} />
 
-      {/* Modal Overlay */}
+      {/* Modal Overlay for Success + Category */}
       {success && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center p-4">
-          <div className="bg-white rounded-t-lg w-full max-w-md p-6 animate-in slide-in-from-bottom">
-            <h3 className="text-lg font-bold text-blue-950 mb-2">What theme does this most fall under?</h3>
-            <p className="text-xs text-gray-600 mb-4">Help us understand what you're rating about</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex flex-col items-end justify-end p-4 min-h-screen">
+          {/* Success Message Modal */}
+          {!selectedCategory && (
+            <div className="bg-white rounded-t-lg w-full max-w-md p-6 animate-in slide-in-from-bottom space-y-4">
+              <div className="p-3 bg-green-50 border-l-4 border-green-600 rounded">
+                <p className="text-sm font-medium text-green-700">✓ Thank you! Your voice has been heard.</p>
+              </div>
 
-            {/* Category Buttons */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {categories.map((category) => (
+              {navigator.share && (
                 <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category === selectedCategory ? null : category)}
-                  className="py-2 px-3 rounded-md text-sm font-medium transition-all"
+                  onClick={handleShare}
+                  className="w-full py-3 font-semibold text-white text-base rounded-md transition-all duration-200"
                   style={{
-                    background: selectedCategory === category ? '#CC0000' : '#f0f0f0',
-                    color: selectedCategory === category ? 'white' : '#333'
+                    background: 'linear-gradient(135deg, #CC0000 0%, #990000 100%)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  Share Civipulse
+                </button>
+              )}
+
+              <button
+                onClick={() => setSelectedCategory('')}
+                className="w-full py-3 font-semibold text-blue-950 text-base rounded-md transition-colors"
+                style={{ background: '#f0f0f0' }}
+              >
+                Add category (optional)
+              </button>
+
+              <button
+                onClick={handleDismissSuccess}
+                className="w-full py-3 font-semibold text-gray-600 text-base rounded-md transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          )}
+
+          {/* Category Selection Modal */}
+          {selectedCategory === '' && (
+            <div className="bg-white rounded-t-lg w-full max-w-md p-6 animate-in slide-in-from-bottom">
+              <h3 className="text-lg font-bold text-blue-950 mb-2">What theme does this most fall under?</h3>
+              <p className="text-xs text-gray-600 mb-4">Help us understand what you're rating about</p>
+
+              {/* Category Buttons with Emojis */}
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.name}
+                    onClick={() => setSelectedCategory(cat.name)}
+                    className="py-3 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    style={{
+                      background: selectedCategory === cat.name ? '#CC0000' : '#f0f0f0',
+                      color: selectedCategory === cat.name ? 'white' : '#333'
+                    }}
+                  >
+                    <span>{cat.emoji}</span>
+                    <span>{cat.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Other Category Text Input */}
+              {selectedCategory === 'Other' && (
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={otherCategoryText}
+                    onChange={(e) => setOtherCategoryText(e.target.value)}
+                    placeholder="e.g., Transport, Housing, Environment"
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600"
+                    style={{ color: '#002147' }}
+                    maxLength={50}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{otherCategoryText.length} / 50</p>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {error && (
+                <p className="text-xs text-red-600 mb-3">{error}</p>
+              )}
+
+              {/* Action Buttons */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleCategorySelect(selectedCategory || '')}
+                  disabled={!selectedCategory || savingCategory}
+                  className="w-full py-2 font-semibold text-white text-sm rounded-md transition-all disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(135deg, #002147 0%, #003366 100%)'
                   }}
                 >
-                  {category}
+                  {savingCategory ? 'Saving...' : 'Confirm'}
                 </button>
-              ))}
-            </div>
-
-            {/* Other Category Text Input */}
-            {selectedCategory === 'Other' && (
-              <div className="mb-4">
-                <input
-                  type="text"
-                  value={otherCategoryText}
-                  onChange={(e) => setOtherCategoryText(e.target.value)}
-                  placeholder="e.g., Transport, Housing, Environment"
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600"
-                  style={{ color: '#002147' }}
-                  maxLength={50}
-                />
-                <p className="text-xs text-gray-500 mt-1">{otherCategoryText.length} / 50</p>
+                <button
+                  onClick={handleDismissSuccess}
+                  className="w-full py-2 font-semibold text-gray-600 text-sm rounded-md transition-colors"
+                >
+                  Skip
+                </button>
               </div>
-            )}
-
-            {/* Error Message */}
-            {error && (
-              <p className="text-xs text-red-600 mb-3">{error}</p>
-            )}
-
-            {/* Action Buttons */}
-            <div className="space-y-2">
-              <button
-                onClick={() => handleCategorySelect(selectedCategory || '')}
-                disabled={!selectedCategory || savingCategory}
-                className="w-full py-2 font-semibold text-white text-sm rounded-md transition-all disabled:opacity-50"
-                style={{
-                  background: 'linear-gradient(135deg, #002147 0%, #003366 100%)'
-                }}
-              >
-                {savingCategory ? 'Saving...' : 'Confirm'}
-              </button>
-              <button
-                onClick={handleSkipCategory}
-                className="w-full py-2 font-semibold text-gray-600 text-sm rounded-md transition-colors"
-              >
-                Skip
-              </button>
             </div>
-          </div>
+          )}
         </div>
       )}
 
